@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.egzosn.demo.dao.UsersMapper" >
+	<resultMap id="simpleUsers" type="com.egzosn.demo.entity.Users" >
+		<id column="id" property="id" jdbcType="INTEGER"/>
+		<result column="cname" property="cname" jdbcType="VARCHAR" />
+		<result column="mea" property="mea" jdbcType="VARCHAR" />
+	</resultMap>
+	<sql id="UsersBase_Column_List" >
+		id,cname,mea
+	</sql>
+
+	<select id="find" resultMap="simpleUsers"  >
+		SELECT
+		<include refid="UsersBase_Column_List" />
+		FROM users
+	</select>
+	<select id="pages1" resultMap="simpleUsers"  >
+		SELECT
+		<include refid="UsersBase_Column_List" />
+		FROM users WHERE cname=#{cname}
+	</select>
+	<select id="pages2" resultMap="simpleUsers"  >
+		SELECT
+		<include refid="UsersBase_Column_List" />
+		FROM users WHERE cname=#{cname}
+	</select>
+
+
+</mapper>
