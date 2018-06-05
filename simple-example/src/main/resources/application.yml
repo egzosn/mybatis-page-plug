@@ -1,9 +1,9 @@
 spring:
   datasource:
     driver-class-name: com.mysql.jdbc.Driver
-    url: jdbc:mysql://54.222.203.83:33060/test
-    username: remote
-    password: hd@huodull.com
+    url: jdbc:mysql://127.0.0.1:3306/test
+    username: root
+    password: root
 mybatis:
   mapper-locations: classpath:mybatis/mapper/*.xml
   config-location: classpath:mybatis/mybatis-config.xml

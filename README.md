@@ -3,12 +3,17 @@
 
 
 # 简单使用
+
 ### 将 com.egzosn.mybatis.page.plug.PagingInterceptor 拦截器加入至spring 容器即可
 
-#### 本项目简单例子是spring boot 项目，直接运行 com.egzosn.demo.DemoApplication 即可
+####  本项目简单例子是spring boot 项目，
+
+1. 修改application.yml 对应的数据源，
+2. 导入db.sql的数据库脚本 
+3. 然后直接运行 com.egzosn.demo.DemoApplication 即可
+
 
 这里对 com.egzosn.demo.dao.UsersMapper 三种运用场景
-
 
  
 入参  `com.egzosn.demo.controller.UsersController.pages1`
