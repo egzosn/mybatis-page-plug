@@ -1,8 +1,9 @@
 package com.egzosn.mybatis.page.plug;
 
+import com.egzosn.mybatis.page.bean.Dialect;
 import com.egzosn.mybatis.page.utils.FieldUtils;
-import com.egzosn.mybatis.page.utils.Page;
-import com.egzosn.mybatis.page.utils.Paging;
+import com.egzosn.mybatis.page.bean.Page;
+import com.egzosn.mybatis.page.bean.Paging;
 import com.egzosn.mybatis.page.utils.SqlTools;
 import org.apache.ibatis.binding.MapperMethod;
 import org.apache.ibatis.builder.StaticSqlSource;
@@ -31,11 +32,17 @@ public class PageExecutor implements Executor {
 
     public static final String countId = "$Count";
 
+    private volatile Dialect dialect;
 
     private final Executor delegate;
 
     public PageExecutor(Executor delegate) {
         this.delegate = delegate;
+    }
+
+    public PageExecutor(Executor delegate, Dialect dialect) {
+        this.delegate = delegate;
+        this.dialect = dialect;
     }
 
     @Override
@@ -103,9 +110,8 @@ public class PageExecutor implements Executor {
         List content = new ArrayList();
         if (0 != num){
             if (paging.isPaging()){
-                String sql = boundSql.getSql();
-                sql += SqlTools.forPaginate(paging.getPage(), paging.getRows());
-                //这里暂时实现mysql，后期通过方言去寻找对象的实现
+                String sql = dialect.forPaginate(boundSql.getSql(), paging.getPage(), paging.getRows());
+
                 FieldUtils.setField(FieldUtils.findFieldCaches( BoundSql.class, "sql"), boundSql, sql);
             }
             CacheKey key  = delegate.createCacheKey(ms, parameterObject, rowBounds, boundSql);
@@ -142,7 +148,7 @@ public class PageExecutor implements Executor {
         }
         String countSql = boundSql.getSql().replace("\n", " ").replace("\t", " ").replace("\r", " ");
         //数据源
-        StaticSqlSource sqlSource = new StaticSqlSource(configuration, SqlTools.getCountSQL(countSql), boundSql.getParameterMappings());
+        StaticSqlSource sqlSource = new StaticSqlSource(configuration, dialect.getCountSQL(countSql), boundSql.getParameterMappings());
         List<ResultMap> resultMaps = new ArrayList<ResultMap>();
         //结果集类型定义
         resultMaps.add(new ResultMap.Builder(configuration, id + "-Inline", Long.class, new ArrayList<ResultMapping>()).build());

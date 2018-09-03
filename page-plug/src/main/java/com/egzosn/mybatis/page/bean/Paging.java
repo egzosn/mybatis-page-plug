@@ -1,4 +1,4 @@
-package com.egzosn.mybatis.page.utils;
+package com.egzosn.mybatis.page.bean;
 
 /**
  * 分页入参使用

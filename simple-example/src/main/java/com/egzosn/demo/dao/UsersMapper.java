@@ -1,8 +1,8 @@
 package com.egzosn.demo.dao;
 
 import com.egzosn.demo.vo.UserVo;
-import com.egzosn.mybatis.page.utils.Page;
-import com.egzosn.mybatis.page.utils.Paging;
+import com.egzosn.mybatis.page.bean.Page;
+import com.egzosn.mybatis.page.bean.Paging;
 import com.egzosn.demo.entity.Users;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;

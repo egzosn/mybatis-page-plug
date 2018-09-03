@@ -33,6 +33,29 @@ public final class SqlTools {
 
     /**
      * 获取统计的sql
+     * @param sql 原始sql
+     * @return 转化后的sql
+     */
+    public static String getCountOracleSQL(String sql) {
+        return getCountOracleSQL(sql, "0");
+    }
+    /**
+     * 获取统计的sql
+     *
+     * @param sql        原始sql
+     * @param countField 需要统计的字段
+     * @return 转化后的sql
+     */
+    public static String getCountOracleSQL(String sql, String countField) {
+        String countSql = String.format("SELECT  COUNT(%s) ", new Object[]{countField == null?"*":countField});
+        String upperSql = sql.toUpperCase();
+        int start = upperSql.indexOf("FROM ");
+        int end = upperSql.lastIndexOf("ORDER BY ");
+        countSql = countSql + sql.substring(start, end == -1?sql.length():end);
+        return countSql;
+    }
+    /**
+     * 获取统计的sql
      *
      * @param sql        原始sql
      * @param countField 需要统计的字段
@@ -87,10 +110,16 @@ public final class SqlTools {
      * @param pageSize   每页大小
      * @return 拼装 分页sql
      */
-    public static String forPaginate(int pageNumber, int pageSize) {
+    public static String mysqlForPaginate(int pageNumber, int pageSize) {
         int offset = pageSize * (pageNumber - 1);
         return String.format(" limit %s,%s", offset, pageSize);
     }
 
+    public static String oracleForPaginate(String sql, int pageNumber, int pageSize) {
+        int offset = pageSize * (pageNumber - 1);
+        String sqltmp = String.format("SELECT *  FROM (SELECT ROWNUM  RN,a.* FROM (  %s  ) a  WHERE ROWNUM <= %s) WHERE RN >%s", new Object[]{sql, Integer.valueOf(offset + pageSize), Integer.valueOf(offset)});
 
+        return sqltmp;
+    }
+    private SqlTools(){};
 }

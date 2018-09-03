@@ -1,6 +1,6 @@
 package com.egzosn.demo.vo;
 
-import com.egzosn.mybatis.page.utils.Paging;
+import com.egzosn.mybatis.page.bean.Paging;
 
 /**
  * 通过继承的方式来做分页的入参

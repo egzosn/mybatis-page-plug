@@ -1,4 +1,4 @@
-package com.egzosn.mybatis.page.utils;
+package com.egzosn.mybatis.page.bean;
 
 import java.util.ArrayList;
 import java.util.List;

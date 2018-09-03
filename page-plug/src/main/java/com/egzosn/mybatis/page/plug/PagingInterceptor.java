@@ -1,5 +1,6 @@
 package com.egzosn.mybatis.page.plug;
 
+import com.egzosn.mybatis.page.bean.Dialect;
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.executor.statement.StatementHandler;
 import org.apache.ibatis.plugin.*;
@@ -9,6 +10,10 @@ import java.util.Properties;
 
 @Intercepts({ @Signature(type = StatementHandler.class, method = "prepare", args = { Connection.class, Integer.class}) })
 public class PagingInterceptor implements Interceptor {
+    /**
+     * 方言
+     */
+    private volatile Dialect dialect;
 
     @Override
     public Object intercept(Invocation invocation) throws Throwable {
@@ -18,14 +23,24 @@ public class PagingInterceptor implements Interceptor {
     @Override
     public Object plugin(Object target) {
         if (target instanceof Executor){
-            return Plugin.wrap(new PageExecutor((Executor)target), this);
+            return Plugin.wrap(new PageExecutor((Executor)target, dialect), this);
         }
         return target;
     }
 
     @Override
     public void setProperties(Properties properties) {
-//        String dialect = properties.getProperty("dialect");
+        if (null == this.dialect){
+            String dialect = properties.getProperty("dialect");
+            //默认使用mysql
+            if (null == dialect || "".equals(dialect)) {
+                this.dialect = Dialect.mysql;
+                return;
+            }
+
+            this.dialect = Dialect.valueOf(dialect);
+        }
+
 //        System.out.println("mybatis intercept dialect:"+ dialect);
     }
 }
