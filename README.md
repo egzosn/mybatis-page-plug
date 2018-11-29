@@ -1,6 +1,11 @@
 # mybatis-page-plug
 超级精简，超级简单，超级优雅实现mybatis分页功能
 
+#### 本项目在以下代码托管网站
+* 码云：https://gitee.com/egzosn/mybatis-page-plug
+* GitHub：https://github.com/egzosn/mybatis-page-plug
+
+
 
 # 简单使用
 
