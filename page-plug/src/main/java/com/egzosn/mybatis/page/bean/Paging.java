@@ -7,6 +7,7 @@ package com.egzosn.mybatis.page.bean;
  *         date 2018/5/16.14:34
  */
 public class Paging {
+
     /**
      * 当前页
      */
@@ -19,14 +20,18 @@ public class Paging {
     /**
      * 是否分页
      */
-    protected  boolean isPaging = true;
+    protected  boolean paging = true;
+    /**
+     * 统计是否移除select与order by 部分
+     */
+    private boolean removeSelect = true;
 
     /**
      * 设置当前页
      * @param page 当前页
      */
     public void setPage(Integer page) {
-        if (null ==page || page <= 0){
+        if (null == page || page <= 0) {
             return;
         }
         this.page = page;
@@ -55,19 +60,26 @@ public class Paging {
      * @param rows 每页记录数
      */
     public void setRows(Integer rows) {
-        if (null == rows){
+        if (null == rows) {
             return;
         }
         this.rows = rows;
     }
 
     public boolean isPaging() {
-        return isPaging;
+        return paging;
     }
 
     public void setPaging(boolean paging) {
-        isPaging = paging;
+        this.paging = paging;
     }
 
+    public boolean isRemoveSelect() {
+        return removeSelect;
+    }
+
+    public void setRemoveSelect(boolean removeSelect) {
+        this.removeSelect = removeSelect;
+    }
 
 }
