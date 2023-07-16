@@ -1,6 +1,16 @@
 package com.egzosn.mybatis.page.utils;
 
 
+import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.expression.Alias;
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.parser.Token;
+import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.select.*;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -9,20 +19,24 @@ import java.sql.Clob;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
-
 /**
- *  jdbc sql生成语句生产
+ * jdbc sql生成语句生产
+ *
  * @author ZaoSheng
- *Wed Nov 162 17:31:32 CST 2015
+ * Wed Nov 162 17:31:32 CST 2015
  */
 public class SQLTools {
+	/**
+	 * 获取jsqlparser中count的SelectItem
+	 */
+	protected static final List<SelectItem> COUNT_SELECT_ITEM = Collections.singletonList(
+			new SelectExpressionItem(new Column().withColumnName("COUNT(*)")).withAlias(new Alias("total"))
+	);
 	private static final Pattern PATTERN = Pattern.compile(":([A-Za-z0-9\\_\\$]+)[, ]?");
 
 	/**
@@ -54,13 +68,132 @@ public class SQLTools {
 	 * @return 转化后的sql
 	 */
 	public static String getCountSQL(final String sql, String countField) {
+		return getSmartCountSql(sql);
+	}
 
-		String countSql = String.format("SELECT  COUNT(%s) ", null == countField ? "*" : countField);
-		String upperSql = sql.toUpperCase();
-		int start = upperSql.indexOf("FROM ");
-		int end = upperSql.lastIndexOf("ORDER BY ");
-		countSql += sql.substring(start, end == -1 ? sql.length() : end);
-		return countSql;
+	/**
+	 * 获取智能的countSql
+	 *
+	 * @param sql
+	 * @return
+	 */
+	public static String getSmartCountSql(String sql) {
+		try {
+			Select select = (Select) CCJSqlParserUtil.parse(sql);
+			SelectBody selectBody = select.getSelectBody();
+			// https://github.com/baomidou/mybatis-plus/issues/3920  分页增加union语法支持
+			if (selectBody instanceof SetOperationList) {
+				return lowLevelCountSql(sql);
+			}
+			PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
+			Distinct distinct = plainSelect.getDistinct();
+			GroupByElement groupBy = plainSelect.getGroupBy();
+			List<OrderByElement> orderBy = plainSelect.getOrderByElements();
+
+			String QUESTION_MARK = "?";
+			if (!(Objects.isNull(orderBy) || orderBy.isEmpty())) {
+				boolean canClean = true;
+				if (groupBy != null) {
+					// 包含groupBy 不去除orderBy
+					canClean = false;
+				}
+				if (canClean) {
+					for (OrderByElement order : orderBy) {
+						// order by 里带参数,不去除order by
+						Expression expression = order.getExpression();
+						if (!(expression instanceof Column) && expression.toString().contains(QUESTION_MARK)) {
+							canClean = false;
+							break;
+						}
+					}
+				}
+				if (canClean) {
+					plainSelect.setOrderByElements(null);
+				}
+			}
+			//#95 Github, selectItems contains #{} ${}, which will be translated to ?, and it may be in a function: power(#{myInt},2)
+			for (SelectItem item : plainSelect.getSelectItems()) {
+				if (item.toString().contains(QUESTION_MARK)) {
+					return lowLevelCountSql(select.toString());
+				}
+			}
+			// 包含 distinct、groupBy不优化
+			if (distinct != null || null != groupBy) {
+				return lowLevelCountSql(select.toString());
+			}
+			// 包含 join 连表,进行判断是否移除 join 连表
+			boolean optimizeJoin = true;
+			if (optimizeJoin) {
+				List<Join> joins = plainSelect.getJoins();
+				if (Objects.isNull(joins) || joins.isEmpty()) {
+					boolean canRemoveJoin = true;
+					String EMPTY = "";
+					String whereS = Optional.ofNullable(plainSelect.getWhere()).map(Expression::toString).orElse(EMPTY);
+					// 不区分大小写
+					whereS = whereS.toLowerCase();
+					for (Join join : joins) {
+						if (!join.isLeft()) {
+							canRemoveJoin = false;
+							break;
+						}
+						FromItem rightItem = join.getRightItem();
+						String str = "";
+						String DOT = ".";
+						if (rightItem instanceof Table) {
+							Table table = (Table) rightItem;
+							str = Optional.ofNullable(table.getAlias()).map(Alias::getName).orElse(table.getName()) + DOT;
+						} else if (rightItem instanceof SubSelect) {
+							SubSelect subSelect = (SubSelect) rightItem;
+							/* 如果 left join 是子查询，并且子查询里包含 ?(代表有入参) 或者 where 条件里包含使用 join 的表的字段作条件,就不移除 join */
+							if (subSelect.toString().contains(QUESTION_MARK)) {
+								canRemoveJoin = false;
+								break;
+							}
+							str = subSelect.getAlias().getName() + DOT;
+						}
+						// 不区分大小写
+						str = str.toLowerCase();
+
+						if (whereS.contains(str)) {
+							/* 如果 where 条件里包含使用 join 的表的字段作条件,就不移除 join */
+							canRemoveJoin = false;
+							break;
+						}
+
+						for (Expression expression : join.getOnExpressions()) {
+							if (expression.toString().contains(QUESTION_MARK)) {
+								/* 如果 join 里包含 ?(代表有入参) 就不移除 join */
+								canRemoveJoin = false;
+								break;
+							}
+						}
+					}
+
+					if (canRemoveJoin) {
+						plainSelect.setJoins(null);
+					}
+				}
+			}
+			// 优化 SQL
+			plainSelect.setSelectItems(COUNT_SELECT_ITEM);
+			return select.toString();
+		} catch (JSQLParserException e) {
+			// 无法优化使用原 SQL
+			//logger.warn("optimize this sql to a count sql has exception, sql:\"" + sql + "\", exception:\n" + e.getCause());
+		} catch (Exception e) {
+			//logger.warn("optimize this sql to a count sql has error, sql:\"" + sql + "\", exception:\n" + e);
+		}
+		return lowLevelCountSql(sql);
+	}
+
+	/**
+	 * 无法进行count优化时,降级使用此方法
+	 *
+	 * @param originalSql 原始sql
+	 * @return countSql
+	 */
+	protected static String lowLevelCountSql(String originalSql) {
+		return SqlParserUtils.getOriginalCountSql(originalSql);
 	}
 
 	/**
@@ -153,15 +286,12 @@ public class SQLTools {
 			char[] buffer = new char[(int) clob.length()];
 			reader.read(buffer);
 			return new String(buffer);
-		}
-		catch (IOException e) {
+		} catch (IOException e) {
 			throw new RuntimeException(e);
-		}
-		finally {
+		} finally {
 			try {
 				reader.close();
-			}
-			catch (IOException e) {
+			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
 		}
@@ -180,15 +310,12 @@ public class SQLTools {
 			is.read(data);
 			is.close();
 			return data;
-		}
-		catch (IOException e) {
+		} catch (IOException e) {
 			throw new RuntimeException(e);
-		}
-		finally {
+		} finally {
 			try {
 				is.close();
-			}
-			catch (IOException e) {
+			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
 		}
@@ -276,8 +403,7 @@ public class SQLTools {
 				SQLTools.fillStatement(ps, v);
 				ps.addBatch();
 			}
-		}
-		else {
+		} else {
 			int i = 0;
 			for (Object param : params) {
 				if (null == param) {
@@ -455,8 +581,7 @@ public class SQLTools {
 				}
 				sb.deleteCharAt(sb.length() - 1);
 				rexp = sb.toString();
-			}
-			else {
+			} else {
 				values.add(ov);
 				rexp = "?";
 			}
@@ -483,7 +608,6 @@ public class SQLTools {
 
 		return sb.toString();
 	}
-
 
 
 }

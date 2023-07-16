@@ -40,11 +40,11 @@
 <!--			<version>1.4.7</version>-->
 <!--		</dependency>-->
 
-<!--		<dependency>-->
-<!--			<groupId>com.egzosn.mybatis</groupId>-->
-<!--			<artifactId>page-plug</artifactId>-->
-<!--			<version>1.0-SNAPSHOT</version>-->
-<!--		</dependency>-->
+		<dependency>
+			<groupId>com.egzosn.mybatis</groupId>
+			<artifactId>page-plug</artifactId>
+			<version>1.0-SNAPSHOT</version>
+		</dependency>
 
 		<dependency>
 			<groupId>com.mysql</groupId>

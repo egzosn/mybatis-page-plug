@@ -3,11 +3,11 @@
         PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-config.dtd">
 <configuration>
-    <objectFactory type="com.bwton.core.db.mybatis.reflection.factory.CustomObjectFactory"/>
-    <objectWrapperFactory type="com.bwton.core.db.mybatis.reflection.wrapper.CustomObjectWrapperFactory"/>
-    <plugins>
-        <plugin interceptor="com.bwton.core.db.mybatis.plugin.PageInterceptor">
-            <property name="dialect" value="mysql"/>
-        </plugin>
-    </plugins>
+<!--    <objectFactory type="com.bwton.core.db.mybatis.reflection.factory.CustomObjectFactory"/>-->
+<!--    <objectWrapperFactory type="com.bwton.core.db.mybatis.reflection.wrapper.CustomObjectWrapperFactory"/>-->
+<!--    <plugins>-->
+<!--        <plugin interceptor="com.bwton.core.db.mybatis.plugin.PageInterceptor">-->
+<!--            <property name="dialect" value="mysql"/>-->
+<!--        </plugin>-->
+<!--    </plugins>-->
 </configuration>
