@@ -21,6 +21,8 @@ public class Users {
 
 	private String mea;
 
+	private Integer count;
+
 	public void setId(Integer id){
 		this.id = id;
 	}
@@ -43,6 +45,14 @@ public class Users {
 
 	public void setMea(String mea) {
 		this.mea = mea;
+	}
+
+	public Integer getCount() {
+		return count;
+	}
+
+	public void setCount(Integer count) {
+		this.count = count;
 	}
 }
 

@@ -23,7 +23,7 @@ public class PagingInterceptor implements Interceptor {
     @Override
     public Object plugin(Object target) {
         if (target instanceof Executor){
-            return Plugin.wrap(new PageExecutor((Executor)target, dialect), this);
+            return Plugin.wrap(new PageExecutor((Executor)target, Dialect.mysql), this);
         }
         return target;
     }

@@ -1,6 +1,7 @@
 package com.egzosn.demo.vo;
 
-import com.egzosn.mybatis.page.bean.Paging;
+
+import com.bwton.lang.PageQuery;
 
 /**
  * 通过继承的方式来做分页的入参
@@ -8,7 +9,7 @@ import com.egzosn.mybatis.page.bean.Paging;
  *         email egzosn@gmail.com
  *         date 2018/6/5.21:13
  */
-public class UserVo extends Paging {
+public class UserVo extends PageQuery {
     /**
      * 条件
      */

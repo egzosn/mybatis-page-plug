@@ -1,10 +1,10 @@
 package com.egzosn.demo.controller;
 
+import com.bwton.lang.Page;
+import com.bwton.lang.PageQuery;
 import com.egzosn.demo.entity.Users;
 import com.egzosn.demo.service.UsersService;
 import com.egzosn.demo.vo.UserVo;
-import com.egzosn.mybatis.page.bean.Page;
-import com.egzosn.mybatis.page.bean.Paging;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,9 +25,9 @@ public class UsersController {
      */
     @RequestMapping("find")
     public Page<Users> find(){
-        Paging paging = new Paging();
+        PageQuery paging = new PageQuery();
         //这里关闭分页查询
-        paging.setPaging(false);
+        //paging.setPaging(false);
         return  service.find(paging);
     }
     /**
@@ -37,7 +37,8 @@ public class UsersController {
      * @return 结果
      */
     @RequestMapping("pages1")
-    public Page<Users> pages1(String cname, Paging paging){
+    public Page<Users> pages1(String cname, PageQuery paging){
+        service.pages1(cname, paging);
         return service.pages1(cname, paging);
     }
 
